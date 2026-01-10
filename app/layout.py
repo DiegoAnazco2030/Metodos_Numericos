@@ -5,13 +5,13 @@ from tkinter import ttk
 from views.empty_view import EmptyView
 from views.minimos_cuadrados_view import MinimosCuadradosView
 from views.newton_raphson_view import NewtonRaphsonView
-# Descomenta estas líneas conforme crees los archivos correspondientes:
 from views.punto_fijo_view import PuntoFijoView
 from views.secante_view import SecanteView
 from views.biseccion_view import BiseccionView
 from views.falsa_posicion_view import FalsaPosicionView
 from views.muller_view import MullerView
 from views.sistemas_ecuaciones_view import SistemasEcuacionesView
+from views.leverrier_view import LeverrierFaddeevView
 
 class MainLayout:
     def __init__(self, root):
@@ -142,6 +142,12 @@ class MainLayout:
             parent,
             text="Sistemas Ax=b (Jacobi, Gauss...)",
             command=lambda: self.show_view(SistemasEcuacionesView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
+        ttk.Button(
+            parent,
+            text="Leverrier-Faddeev (Inversa/Eigen)",
+            command=lambda: self.show_view(LeverrierFaddeevView)
         ).pack(fill=tk.X, padx=10, pady=6)
 
         # ---- Mínimos Cuadrados ----
