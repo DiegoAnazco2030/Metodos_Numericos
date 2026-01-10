@@ -11,6 +11,7 @@ from views.secante_view import SecanteView
 from views.biseccion_view import BiseccionView
 from views.falsa_posicion_view import FalsaPosicionView
 from views.muller_view import MullerView
+from views.sistemas_ecuaciones_view import SistemasEcuacionesView
 
 class MainLayout:
     def __init__(self, root):
@@ -133,6 +134,14 @@ class MainLayout:
             parent,
             text="Método de Müller",
             command=lambda: self.show_view(MullerView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
+        # --- Metodos de matrices ----
+
+        ttk.Button(
+            parent,
+            text="Sistemas Ax=b (Jacobi, Gauss...)",
+            command=lambda: self.show_view(SistemasEcuacionesView)
         ).pack(fill=tk.X, padx=10, pady=6)
 
         # ---- Mínimos Cuadrados ----
