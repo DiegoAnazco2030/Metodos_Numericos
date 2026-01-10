@@ -1,4 +1,4 @@
-from usoGeneralFunicones.usoMatrices import ingresoMatrizTerminal, matrizIdentidad, traza_matriz, obtenerBr, multiplicacion_matrices
+from metodos.usoGeneralFunicones.usoMatrices import ingresoMatrizTerminal, matrizIdentidad, traza_matriz, obtenerBr, multiplicacion_matrices
 
 def favveedLeberrier():
     print("Ingrese las dimensiones de la matriz")

@@ -1,4 +1,4 @@
-from usoGeneralFunicones.usoMatrices import *
+from metodos.usoGeneralFunicones.usoMatrices import *
 import math
 
 # ---------- VALIDACIONES PARA METODOS NUMERICOS ----------

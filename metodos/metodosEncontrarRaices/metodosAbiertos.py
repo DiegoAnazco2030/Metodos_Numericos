@@ -2,7 +2,7 @@ import sympy as sp
 import math
 from typing import Callable
 #Llamo mi funcion que transforma strings a funciones evaluables
-from usoGeneralFunicones import usoVariablesSympy as uv
+from metodos.usoGeneralFunicones import usoVariablesSympy as uv
 
 
 #*--------------------------------------------------------------------------------------------------------*

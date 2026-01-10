@@ -1,6 +1,6 @@
 import math
 #Llamo mi funcion que transforma strings a funciones evaluables
-from usoGeneralFunicones import usoVariablesSympy as uv
+from metodos.usoGeneralFunicones import usoVariablesSympy as uv
 
 
 #*--------------------------------------------------------------------------------------------------------*

@@ -7,7 +7,7 @@ from typing import Callable, Dict
 
 # -------------------------------------------------------------------
 # Funciones imprtados
-from metodosEncontrarRaices import metodosAbiertos as ma, metodosCerrados as mc, raicesPolinomicas as rp
+from metodos.metodosEncontrarRaices import metodosAbiertos as ma, metodosCerrados as mc, raicesPolinomicas as rp
 # -------------------------------------------------------------------
 
 # --- Implementaciones Simuladas (para demostración) ---

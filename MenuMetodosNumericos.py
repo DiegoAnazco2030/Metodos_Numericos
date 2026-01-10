@@ -7,8 +7,8 @@ from typing import Callable, Dict
 
 # -------------------------------------------------------------------
 # Funciones imprtados
-from metodosEncontrarRaices.MenuEncontrarRaices import *
-from metodosMatrices.MenuMetodosMatrices import *
+from metodos.metodosEncontrarRaices.MenuEncontrarRaices import *
+from metodos.metodosMatrices.MenuMetodosMatrices import *
 # -------------------------------------------------------------------
 
 # --- Implementaciones Simuladas (para demostración) ---

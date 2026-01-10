@@ -7,7 +7,7 @@ from typing import Callable, Dict
 
 # -------------------------------------------------------------------
 # Funciones imprtados
-from metodosMatrices import resto_de_metodos as rdm, Leverrier_Faddeev as lf1, metodoFavveedLeverrier as lf2
+from metodos.metodosMatrices import resto_de_metodos as rdm, Leverrier_Faddeev as lf1, metodoFavveedLeverrier as lf2
 
 
 # -------------------------------------------------------------------

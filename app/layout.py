@@ -45,6 +45,7 @@ class MainLayout:
         self.method_section = self._create_scrollable_section("Métodos Numéricos")
 
         # AQUÍ SE AGREGAN LOS BOTONES DE LOS MÉTODOS
+
         self._create_method_buttons(self.method_section.content)
 
         # Distribución 50 / 50
@@ -108,6 +109,8 @@ class MainLayout:
             text="Mínimos Cuadrados",
             command=lambda: self.show_view(MinimosCuadradosView)
         ).pack(fill=tk.X, padx=10, pady=6)
+
+
 
         # ---- EJEMPLOS PARA FUTUROS MÉTODOS ----
         # (DESCOMENTA CUANDO LOS IMPLEMENTES)
