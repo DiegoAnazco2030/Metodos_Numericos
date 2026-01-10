@@ -1,80 +1,89 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from views.base_view import BaseView
-from metodos.metodosEncontrarRaices.metodosAbiertos import *  # Asegúrate que la ruta sea correcta
-from metodos.usoGeneralFunicones import usoVariablesSympy as uv
+# Importamos la nueva versión con Mayúscula
+from metodos.metodosEncontrarRaices.metodosAbiertos import NewtonRaphson
 
 
 class NewtonRaphsonView(BaseView):
+    def __init__(self, parent, layout=None):
+        super().__init__(parent, layout)
+
     def build(self):
         self.columnconfigure(0, weight=1)
 
-        # --- Panel de Entrada ---
-        input_frame = ttk.LabelFrame(self, text="Parámetros de Entrada")
-        input_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
+        # --- PANEL DE ENTRADA ---
+        input_frame = ttk.LabelFrame(self, text="Newton-Raphson (Entrada)")
+        input_frame.pack(fill=tk.X, padx=10, pady=10)
 
-        ttk.Label(input_frame, text="Función f(x):").grid(row=0, column=0, padx=5, pady=5)
-        self.entry_f = ttk.Entry(input_frame, width=30)
-        self.entry_f.grid(row=0, column=1, padx=5, pady=5)
+        # Fila Función
+        row_f = ttk.Frame(input_frame)
+        row_f.pack(fill=tk.X, padx=5, pady=5)
+        ttk.Label(row_f, text="Función f(x):").pack(side=tk.LEFT)
+        self.entry_f = ttk.Entry(row_f)
+        self.entry_f.pack(side=tk.LEFT, expand=True, fill=tk.X, padx=5)
+        ttk.Button(row_f, text="Usar Seleccionada", command=self._get_from_manager).pack(side=tk.LEFT)
 
-        # Botón para jalar función del FunctionManager
-        ttk.Button(input_frame, text="Usar Seleccionada", command=self._get_from_manager).grid(row=0, column=2, padx=5)
+        # Fila Parámetros
+        row_p = ttk.Frame(input_frame)
+        row_p.pack(fill=tk.X, padx=5, pady=5)
+        ttk.Label(row_p, text="x0:").pack(side=tk.LEFT)
+        self.entry_x0 = ttk.Entry(row_p, width=12)
+        self.entry_x0.pack(side=tk.LEFT, padx=5)
 
-        ttk.Label(input_frame, text="x0 (Punto Inicial):").grid(row=1, column=0, padx=5, pady=5)
-        self.entry_x0 = ttk.Entry(input_frame, width=15)
-        self.entry_x0.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+        ttk.Label(row_p, text="Tolerancia:").pack(side=tk.LEFT, padx=5)
+        self.entry_tol = ttk.Entry(row_p, width=12)
+        self.entry_tol.insert(0, "1e-7")
+        self.entry_tol.pack(side=tk.LEFT, padx=5)
 
-        ttk.Button(input_frame, text="Calcular", command=self._calculate).grid(row=2, column=1, pady=10)
+        ttk.Button(input_frame, text="Calcular", command=self._calculate).pack(pady=10)
 
-        # --- Tabla de Resultados ---
+        # --- TABLA DE RESULTADOS ---
         table_frame = ttk.LabelFrame(self, text="Iteraciones")
-        table_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
-        self.rowconfigure(1, weight=1)
+        table_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        self.tree = ttk.Treeview(table_frame, columns=("i", "xi", "error"), show="headings")
-        self.tree.heading("i", text="Iteración")
-        self.tree.heading("xi", text="xi")
-        self.tree.heading("error", text="Error Relativo")
-        self.tree.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # 4 Columnas: it, x, f(x), error
+        self.tree = ttk.Treeview(table_frame, columns=("it", "x", "fx", "error"), show="headings")
 
-        # --- Resultado Final ---
-        self.lbl_res = ttk.Label(self, text="Raíz: -", font=("Arial", 12, "bold"))
-        self.lbl_res.grid(row=2, column=0, pady=5)
+        self.tree.heading("it", text="It")
+        self.tree.heading("x", text="xi")
+        self.tree.heading("fx", text="f(xi)")
+        self.tree.heading("error", text="Error Absoluto")
+
+        # Configuración de columnas
+        self.tree.column("it", width=50, anchor=tk.CENTER)
+        self.tree.column("x", width=160, anchor=tk.CENTER)
+        self.tree.column("fx", width=160, anchor=tk.CENTER)
+        self.tree.column("error", width=160, anchor=tk.CENTER)
+
+        self.tree.pack(fill=tk.BOTH, expand=True)
 
     def _get_from_manager(self):
-        # Accedemos al app -> layout -> function_manager (ajusta según tu estructura real)
-        try:
-            # Buscamos la instancia de FunctionManager a través del root/layout
-            func = self.master.master.layout.function_manager.get_selected_function()
+        """Autocompleta desde el panel de la izquierda"""
+        if self.layout and self.layout.function_manager:
+            func = self.layout.function_manager.get_selected_function()
             if func:
                 self.entry_f.delete(0, tk.END)
-                self.entry_f.insert(0, func)
-        except:
-            messagebox.showwarning("Aviso", "No se pudo obtener la función seleccionada.")
+                self.entry_f.insert(0, str(func))
 
     def _calculate(self):
         try:
             f_str = self.entry_f.get()
             x0 = float(self.entry_x0.get())
+            tol = float(self.entry_tol.get())
 
             # Limpiar tabla
-            for i in self.tree.get_children(): self.tree.delete(i)
+            for i in self.tree.get_children():
+                self.tree.delete(i)
 
-            # Necesitamos que tu método devuelva la lista de iteraciones para llenar la tabla
-            # Si tu método actual en metodosAbiertos solo imprime,
-            # deberías modificarlo para que retorne (raiz, lista_iteraciones)
+            # Llamada a la nueva función NewtonRaphson
+            raiz, historial = NewtonRaphson(f_str, x0, 50, tol)
 
-            f_eval = uv.deStringAFuncionEvaluable(f_str)
-            f_sym = uv.deStringAFuncionSimbolica(f_str)
+            # Llenar la tabla de la GUI
+            for fila in historial:
+                self.tree.insert("", tk.END, values=fila)
 
-            # Llamada al método (asumiendo una versión que retorne datos)
-            raiz = newtonRaphson(f_eval, f_sym, x0)
-
-            if raiz is not None:
-                self.lbl_res.config(text=f"Raíz encontrada: {raiz:.10f}")
-                # Aquí llenarías la tabla con los datos que retorne el método
-            else:
-                self.lbl_res.config(text="El método no convergió.")
+            messagebox.showinfo("Éxito", f"Raíz encontrada: {raiz:.10f}")
 
         except Exception as e:
-            messagebox.showerror("Error", f"Entrada inválida: {e}")
+            messagebox.showerror("Error", f"Ocurrió un problema: {e}")

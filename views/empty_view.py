@@ -1,8 +1,10 @@
 from views.base_view import BaseView
 from tkinter import ttk
 
-
 class EmptyView(BaseView):
+    def __init__(self, parent, layout=None): # Añadir este constructor
+        super().__init__(parent, layout)
+
     def build(self):
         ttk.Label(
             self,

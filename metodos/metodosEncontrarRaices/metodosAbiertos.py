@@ -203,6 +203,48 @@ def newtonRaphsonTerminal():
 
 # Metodo newtonRaphson
 
+# En metodos/metodosAbiertos.py
+
+# Nueva versión para la GUI en metodos/metodosAbiertos.py
+
+def NewtonRaphson(funcion_input, xi, max_iter, tol=1e-7):
+    """Versión para GUI: Retorna (raiz, historial_lista)"""
+    x = sp.symbols('x')
+    # Usamos tus utilidades para procesar la función
+    funcion_simbolica = uv.deStringAFuncionSimbolica(funcion_input)
+    funcion_diff = sp.diff(funcion_simbolica, x)
+
+    funcion_eval = uv.deStringAFuncionEvaluable(funcion_input)
+    funcion_diff_eval = uv.deStringAFuncionEvaluable(str(funcion_diff))
+
+    xi_anterior = xi
+    historial_iteraciones = []
+
+    # Iteración 0
+    f_0 = funcion_eval(xi_anterior)
+    historial_iteraciones.append((0, f"{xi_anterior:.10f}", f"{f_0:.10e}", "---"))
+
+    for i in range(1, max_iter + 1):
+        f_val = f_0  # Reutilizamos el valor calculado
+        f_derivada_val = funcion_diff_eval(xi_anterior)
+
+        if abs(f_derivada_val) < 1e-15:
+            return xi_anterior, historial_iteraciones
+
+        xi_actual = xi_anterior - f_val / f_derivada_val
+        error = abs(xi_actual - xi_anterior)
+
+        f_actual = funcion_eval(xi_actual)
+        historial_iteraciones.append((i, f"{xi_actual:.10f}", f"{f_actual:.10e}", f"{error:.10e}"))
+
+        if error < tol:
+            return xi_actual, historial_iteraciones
+
+        xi_anterior = xi_actual
+        f_0 = f_actual  # Actualizamos para la siguiente iteración
+
+    return xi_anterior, historial_iteraciones
+
 def newtonRaphson(funcion_input, xi, max_iter, tol=1e-7): 
     
     x = sp.symbols('x')

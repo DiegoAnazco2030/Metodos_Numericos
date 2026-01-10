@@ -9,6 +9,8 @@ from metodos.regresion.minimos_cuadrados.minimos_cuadrados import minimos_cuadra
 
 
 class MinimosCuadradosView(BaseView):
+    def __init__(self, parent, layout=None):  # Añadir constructor
+        super().__init__(parent, layout)
 
     def build(self):
         self.columnconfigure(0, weight=1)
