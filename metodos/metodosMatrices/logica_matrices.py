@@ -44,55 +44,96 @@ def es_diagonal_dominante(A):
 
 def MetodoJacobi(A, b, tol=1e-6, max_iter=100):
     """
-    Retorna: x (solución), iteraciones (historial opcional)
+    Retorna: x, historial, mensaje_advertencia
     """
     n = len(A)
+    advertencia = None
     
-    if not (es_diagonal_dominante(A) or (es_simetrica(A) and es_definida_positiva(A))):
-        raise ValueError("La matriz no garantiza convergencia (No es diagonal dominante ni def. positiva).")
+    # 1. Validar condiciones pero NO detener
+    if not es_diagonal_dominante(A):
+        advertencia = "La matriz NO es diagonal dominante.\nSe recomienda reordenar las filas para asegurar la convergencia."
+    elif not (es_simetrica(A) and es_definida_positiva(A)):
+         # Nota: Jacobi a veces converge sin ser diag dominante, pero es raro.
+         if not advertencia: 
+             advertencia = "La matriz no cumple condiciones estrictas de convergencia."
 
-    x = [0.0] * n
-    historial = []
+    x = [0.0] * n # Vector inicial
+    historial = [] 
+    error_prev = float('inf')
+    contador = 0
 
     for k in range(max_iter):
         x_new = x[:]
+        # Iteración de Jacobi
         for i in range(n):
             suma = sum(A[i][j] * x[j] for j in range(n) if j != i)
-            if A[i][i] == 0: raise ValueError(f"Cero en la diagonal en la fila {i}")
+            if A[i][i] == 0: 
+                return x, historial, "Error Crítico: Cero en la diagonal principal. Imposible dividir."
             x_new[i] = (b[i] - suma) / A[i][i]
         
+        # Calcular error
         norma = max(abs(x_new[i] - x[i]) for i in range(n))
         historial.append({'iter': k+1, 'x': x_new[:], 'error': norma})
         
+        # 2. Chequeo de Convergencia
         if norma < tol:
-            return x_new, historial
+            return x_new, historial, advertencia
+            
+        # 3. Chequeo de Divergencia por mas de 5 iteraciones
+        # Solo verificamos después de la primera iteración para tener referencia
+        if k >0 and norma > error_prev:
+            contador +=1
+        else:
+            contador =0
+        if contador >= 5:
+            msg_div = "\n\n¡MÉTODO DIVERGENTE!\nEl error ha aumentado durante 5 iteraciones seguidas."
+            advertencia = (advertencia or "") + msg_div
+            return x_new, historial, advertencia
+
         x = x_new
-    
-    raise ValueError("El método no convergió en el máximo de iteraciones.")
+        error_prev = norma
+        
+    return x, historial, (advertencia or "Se alcanzó el máximo de iteraciones sin converger.")
 
 def MetodoGaussSeidel(A, b, tol=1e-6, max_iter=100):
     n = len(A)
+    advertencia = None
     
-    if not (es_diagonal_dominante(A) or (es_simetrica(A) and es_definida_positiva(A))):
-        raise ValueError("La matriz no garantiza convergencia para Gauss-Seidel.")
+    if not es_diagonal_dominante(A) and not (es_simetrica(A) and es_definida_positiva(A)):
+        advertencia = "La matriz NO garantiza convergencia (No es Diag. Dominante ni Def. Positiva).\nIntente reordenar filas."
 
     x = [0.0] * n
     historial = []
+    error_prev = float('inf')
 
     for k in range(max_iter):
         x_old = x[:]
+        # Iteración de Gauss-Seidel
         for i in range(n):
             suma = sum(A[i][j] * x[j] for j in range(n) if j != i)
-            if A[i][i] == 0: raise ValueError(f"Cero en la diagonal en fila {i}")
+            if A[i][i] == 0: 
+                return x, historial, "Error Crítico: Cero en la diagonal principal."
             x[i] = (b[i] - suma) / A[i][i]
         
         norma = max(abs(x[i] - x_old[i]) for i in range(n))
         historial.append({'iter': k+1, 'x': x[:], 'error': norma})
 
         if norma < tol:
-            return x, historial
+            return x, historial, advertencia
+
+        # Chequeo de Divergencia Explosiva
+        if k >0 and norma > error_prev:
+            contador +=1
+        else:
+            contador =0
+        if contador >= 5:
+            msg_div = "\n\n¡MÉTODO DIVERGENTE!\nEl error ha aumentado durante 5 iteraciones seguidas."
+            advertencia = (advertencia or "") + msg_div
+            return x, historial, advertencia
             
-    raise ValueError("El método no convergió.")
+        error_prev = norma
+            
+    return x, historial, (advertencia or "Se alcanzó el máximo de iteraciones.")
 
 def EliminacionGaussiana(A_in, b_in):
     n = len(A_in)
@@ -163,3 +204,15 @@ def MetodoCholesky(A_in, b_in):
         x[i] = (y[i] - sum(L[k][i] * x[k] for k in range(i + 1, n))) / L[i][i]
 
     return x, L
+
+# ==========================================
+# HELPER DE COMPROBACIÓN
+# ==========================================
+def comprobar_solucion(A, x):
+    """Calcula Ax para comparar con b"""
+    n = len(A)
+    Ax = []
+    for i in range(n):
+        val = sum(A[i][j] * x[j] for j in range(n))
+        Ax.append(val)
+    return Ax
