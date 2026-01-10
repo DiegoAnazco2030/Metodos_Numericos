@@ -119,6 +119,66 @@ def puntoFijo(g: Callable[[float], float], x0: float, tol: float = 1e-6, max_ite
     print(f"\n¡Advertencia! El método no convergió después de {max_iter} iteraciones.")
     return None
 
+
+# Agregar a metodos/metodosAbiertos.py
+def PuntoFijo(f_input, x0, tol=1e-7, max_iter=50, g_input_manual=None):
+    """
+    Versión para GUI del Método de Punto Fijo.
+    Retorna (raiz, historial_lista, g_generada_str)
+    """
+    x = sp.symbols('x')
+    f_simbolica = uv.deStringAFuncionSimbolica(f_input)
+    f_eval = uv.deStringAFuncionEvaluable(f_input)
+
+    # Determinamos qué g(x) usar
+    if g_input_manual:
+        g_eval = uv.deStringAFuncionEvaluable(g_input_manual)
+        g_str_display = g_input_manual
+    else:
+        # Usamos tu función existente para encontrar la g óptima
+        g_eval, g_simbolica = encontrarGOptima(f_simbolica, x0)
+        if g_eval is None:
+            raise ValueError("No se pudo generar una función g(x) convergente automáticamente.")
+        g_str_display = str(g_simbolica)
+
+    historial_iteraciones = []
+    x_prev = x0
+
+    # Iteración 0
+    f_0 = f_eval(x_prev)
+    historial_iteraciones.append((0, f"{x_prev:.10f}", f"{f_0:.10e}", "---"))
+
+    error_prev = float('inf')
+    div_count = 0
+
+    for i in range(1, max_iter + 1):
+        try:
+            x_new = g_eval(x_prev)
+        except:
+            break
+
+        if not math.isfinite(x_new):
+            break
+
+        error = abs(x_new - x_prev)
+        f_new = f_eval(x_new)
+
+        historial_iteraciones.append((i, f"{x_new:.10f}", f"{f_new:.10e}", f"{error:.10e}"))
+
+        if error < tol:
+            return x_new, historial_iteraciones, g_str_display
+
+        # Control de divergencia simple para la GUI
+        if error > error_prev:
+            div_count += 1
+        if div_count > 8:  # Si el error sube mucho, paramos
+            break
+
+        x_prev = x_new
+        error_prev = error
+
+    return x_prev, historial_iteraciones, g_str_display
+
 def puntoFijoTerminal():
     print("\n--- Método de Iteración Simple de Punto Fijo ---")
     try:
@@ -297,6 +357,46 @@ def newtonRaphsonTerminal():
 #*--------------------------------------------------------------------------------------------------------*
 
 # El metodo de la secante
+
+# Agregar a metodos/metodosAbiertos.py
+
+def Secante(f_input, x_prev, x_curr, tol=1e-7, max_iter=50):
+    """
+    Versión para GUI del Método de la Secante.
+    Retorna (raiz, historial_lista)
+    """
+    f_eval = uv.deStringAFuncionEvaluable(f_input)
+    historial_iteraciones = []
+
+    for i in range(1, max_iter + 1):
+        f_prev = f_eval(x_prev)
+        f_curr = f_eval(x_curr)
+
+        # Evitar división por cero
+        if abs(f_curr - f_prev) < 1e-15:
+            return x_curr, historial_iteraciones
+
+        # Fórmula de la secante
+        x_next = x_curr - f_curr * (x_curr - x_prev) / (f_curr - f_prev)
+        error = abs(x_next - x_curr)
+        f_next = f_eval(x_next)
+
+        # Guardamos: It, x_anterior, x_actual, f(x_actual), Error
+        historial_iteraciones.append((
+            i,
+            f"{x_prev:.10f}",
+            f"{x_curr:.10f}",
+            f"{f_curr:.10e}",
+            f"{error:.10e}"
+        ))
+
+        if error < tol:
+            return x_next, historial_iteraciones
+
+        x_prev = x_curr
+        x_curr = x_next
+
+    return x_curr, historial_iteraciones
 
 def secante(f: Callable[[float], float], x_prev: float, x_curr: float, tol: float = 1e-6, max_iter: int = 50) -> float | None:
     

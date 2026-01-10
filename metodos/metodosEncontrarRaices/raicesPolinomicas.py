@@ -1,4 +1,5 @@
 import sympy as sp
+import cmath
 from typing import Callable
 #Llamo mi funcion que transforma strings a funciones evaluables
 from metodos.usoGeneralFunicones import usoVariablesSympy as uv
@@ -7,6 +8,67 @@ from metodos.usoGeneralFunicones import usoVariablesSympy as uv
 #*--------------------------------------------------------------------------------------------------------*
 
 # Metodo de Muller
+
+def Muller(f_input, x0, x1, x2, tol=1e-7, max_iter=50):
+    """
+    Versión para GUI del Método de Müller.
+    Soporta raíces complejas y retorna (raiz, historial_lista)
+    """
+    f_eval = uv.deStringAFuncionEvaluable(f_input)
+    historial_iteraciones = []
+
+    # Convertimos los puntos iniciales a complejos para permitir cálculos en ese dominio
+    x0, x1, x2 = complex(x0), complex(x1), complex(x2)
+
+    for i in range(1, max_iter + 1):
+        f0, f1, f2 = f_eval(x0), f_eval(x1), f_eval(x2)
+
+        # Diferencias
+        h0 = x1 - x0
+        h1 = x2 - x1
+        d0 = (f1 - f0) / h0
+        d1 = (f2 - f1) / h1
+
+        # Coeficientes de la parábola a*z^2 + b*z + c = 0
+        a = (d1 - d0) / (h1 + h0)
+        b = a * h1 + d1
+        c = f2
+
+        # Discriminante complejo
+        discriminante = cmath.sqrt(b ** 2 - 4 * a * c)
+
+        # Elegimos el signo que maximice el denominador (estabilidad numérica)
+        den_pos = b + discriminante
+        den_neg = b - discriminante
+        denominador = den_pos if abs(den_pos) > abs(den_neg) else den_neg
+
+        if abs(denominador) < 1e-15:
+            return x2, historial_iteraciones
+
+        # Nueva aproximación
+        dx = -2 * c / denominador
+        x_new = x2 + dx
+        error = abs(dx)  # Error absoluto entre iteraciones
+
+        # Guardamos los datos. Si la parte imaginaria es casi 0, mostramos solo la real.
+        def format_complex(z):
+            if abs(z.imag) < 1e-10: return f"{z.real:.10f}"
+            return f"{z.real:.6f} + {z.imag:.6f}j"
+
+        historial_iteraciones.append((
+            i,
+            format_complex(x_new),
+            f"{abs(f_eval(x_new)):.4e}",
+            f"{error:.4e}"
+        ))
+
+        if error < tol:
+            return x_new, historial_iteraciones
+
+        # Desplazamiento de puntos
+        x0, x1, x2 = x1, x2, x_new
+
+    return x2, historial_iteraciones
 
 def muller(f: Callable[[float], float], x0: float, x1: float, x2: float, tol: float = 1e-6, max_iter: int = 50) -> float | None:
 

@@ -7,6 +7,52 @@ from metodos.usoGeneralFunicones import usoVariablesSympy as uv
 
 # Metodo de biseccion
 
+# Agregar a metodos/metodosCerrados.py
+
+def Biseccion(f_input, a, b, tol=1e-7, max_iter=50):
+    """
+    Versión para GUI del Método de Bisección.
+    Retorna (raiz, historial_lista)
+    """
+    f_eval = uv.deStringAFuncionEvaluable(f_input)
+
+    # Validación inicial de signos
+    if f_eval(a) * f_eval(b) >= 0:
+        raise ValueError("f(a) y f(b) deben tener signos opuestos.")
+
+    historial_iteraciones = []
+    x_anterior = a
+
+    for i in range(1, max_iter + 1):
+        x_m = (a + b) / 2
+        f_m = f_eval(x_m)
+
+        # Cálculo del error absoluto (distancia entre límites o cambio en x)
+        error = abs(b - a) / 2 if i > 1 else abs(x_m - x_anterior)
+
+        # Guardamos: It, Lim. Inf, Lim. Sup, xm, f(xm), Error
+        historial_iteraciones.append((
+            i,
+            f"{a:.10f}",
+            f"{b:.10f}",
+            f"{x_m:.10f}",
+            f"{f_m:.10e}",
+            f"{error:.10e}" if i > 1 else "---"
+        ))
+
+        if abs(f_m) < 1e-15 or error < tol:
+            return x_m, historial_iteraciones
+
+        # Cambio de límites
+        if f_eval(a) * f_m < 0:
+            b = x_m
+        else:
+            a = x_m
+
+        x_anterior = x_m
+
+    return (a + b) / 2, historial_iteraciones
+
 def biseccion(funcion, limiteInferior, limiteSuperior, numIteraciones):
 
     #Los limties deben ser de signos opuestos
@@ -54,6 +100,61 @@ def biseccionTerminal():
 #*--------------------------------------------------------------------------------------------------------*
 
 # Metodo de falsa posicion
+
+# Agregar a metodos/metodosCerrados.py
+
+def FalsaPosicion(f_input, a, b, tol=1e-7, max_iter=50):
+    """
+    Versión para GUI del Método de Falsa Posición.
+    Retorna (raiz, historial_lista)
+    """
+    f_eval = uv.deStringAFuncionEvaluable(f_input)
+
+    # Los límites deben ser de signos opuestos
+    if f_eval(a) * f_eval(b) >= 0:
+        raise ValueError("f(a) y f(b) deben tener signos opuestos.")
+
+    historial_iteraciones = []
+
+    # Cálculo inicial de Xr
+    fa = f_eval(a)
+    fb = f_eval(b)
+    xr = (a * fb - b * fa) / (fb - fa)
+    xr_anterior = xr
+
+    for i in range(1, max_iter + 1):
+        fa = f_eval(a)
+        fb = f_eval(b)
+
+        # Fórmula de Falsa Posición
+        xr = (a * fb - b * fa) / (fb - fa)
+        fxr = f_eval(xr)
+
+        # Error relativo porcentual aproximado
+        error = abs((xr - xr_anterior) / xr) * 100 if xr != 0 else 0
+
+        # Guardamos: It, Lim. Inf, Lim. Sup, xr, f(xr), Error (%)
+        historial_iteraciones.append((
+            i,
+            f"{a:.10f}",
+            f"{b:.10f}",
+            f"{xr:.10f}",
+            f"{fxr:.10e}",
+            f"{error:.7f}%" if i > 1 else "---"
+        ))
+
+        if abs(fxr) < 1e-15 or (i > 1 and error < tol):
+            return xr, historial_iteraciones
+
+        # Cambio de límites basado en el signo
+        if fa * fxr > 0:
+            a = xr
+        else:
+            b = xr
+
+        xr_anterior = xr
+
+    return xr, historial_iteraciones
 
 def falsa_posicion(funcion, limiteInferior, limiteSuperior, numIteraciones):
 

@@ -6,8 +6,11 @@ from views.empty_view import EmptyView
 from views.minimos_cuadrados_view import MinimosCuadradosView
 from views.newton_raphson_view import NewtonRaphsonView
 # Descomenta estas líneas conforme crees los archivos correspondientes:
-# from views.punto_fijo_view import PuntoFijoView
-# from views.secante_view import SecanteView
+from views.punto_fijo_view import PuntoFijoView
+from views.secante_view import SecanteView
+from views.biseccion_view import BiseccionView
+from views.falsa_posicion_view import FalsaPosicionView
+from views.muller_view import MullerView
 
 class MainLayout:
     def __init__(self, root):
@@ -95,11 +98,41 @@ class MainLayout:
         """
         Registro de botones para navegar entre métodos.
         """
+        ttk.Button(
+            parent,
+            text="Bisección",
+            command=lambda: self.show_view(BiseccionView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
+        ttk.Button(
+            parent,
+            text="Falsa Posición",
+            command=lambda: self.show_view(FalsaPosicionView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
+        ttk.Button(
+            parent,
+            text="Punto Fijo",
+            command=lambda: self.show_view(PuntoFijoView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
         # ---- Newton-Raphson ----
         ttk.Button(
             parent,
             text="Newton-Raphson",
             command=lambda: self.show_view(NewtonRaphsonView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
+        ttk.Button(
+            parent,
+            text="Secante",
+            command=lambda: self.show_view(SecanteView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
+        ttk.Button(
+            parent,
+            text="Método de Müller",
+            command=lambda: self.show_view(MullerView)
         ).pack(fill=tk.X, padx=10, pady=6)
 
         # ---- Mínimos Cuadrados ----
