@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from views.base_view import BaseView
-from views.matrix_widget import MatrixWidget
 
 # Importamos la lógica incluyendo el nuevo helper
 from metodos.metodosMatrices.logica_matrices import (
@@ -11,6 +10,7 @@ from metodos.metodosMatrices.logica_matrices import (
 class SistemasEcuacionesView(BaseView):
     def __init__(self, parent, layout=None):
         super().__init__(parent, layout)
+        self.current_matrix = None  # Almacena (A, b)
 
     def build(self):
         self.columnconfigure(0, weight=1)
@@ -24,8 +24,17 @@ class SistemasEcuacionesView(BaseView):
         lbl_mat = ttk.LabelFrame(left_panel, text="Sistema de Ecuaciones (Ax = b)")
         lbl_mat.pack(fill=tk.BOTH, expand=True, pady=5)
         
-        self.matrix_widget = MatrixWidget(lbl_mat)
-        self.matrix_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # Botón para cargar matriz seleccionada
+        ttk.Button(
+            lbl_mat,
+            text="Cargar Matriz Seleccionada",
+            command=self._load_selected_matrix
+        ).pack(fill=tk.X, padx=10, pady=10)
+        
+        # Área de visualización de la matriz cargada
+        ttk.Label(lbl_mat, text="Matriz Actual:").pack(anchor="w", padx=10)
+        self.txt_matrix = tk.Text(lbl_mat, height=12, bg="#f9f9f9", font=("Consolas", 9), state='disabled')
+        self.txt_matrix.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
 
         lbl_cfg = ttk.LabelFrame(left_panel, text="Configuración")
         lbl_cfg.pack(fill=tk.X, pady=5)
@@ -91,6 +100,44 @@ class SistemasEcuacionesView(BaseView):
         self.tree_comp.column("ec", width=40, anchor="center")
         self.tree_comp.pack(fill=tk.X, expand=False, padx=5, pady=5)
 
+    def _load_selected_matrix(self):
+        """Carga la matriz seleccionada del MatrixManager"""
+        if not self.layout or not hasattr(self.layout, 'matrix_manager'):
+            messagebox.showerror("Error", "No se encontró el gestor de matrices.")
+            return
+        
+        matrix_data = self.layout.matrix_manager.get_selected_matrix()
+        if matrix_data is None:
+            messagebox.showwarning("Advertencia", "Por favor, seleccione una matriz del historial.")
+            return
+        
+        self.current_matrix = matrix_data
+        A, b = matrix_data
+        
+        # Mostrar la matriz cargada
+        self.txt_matrix.config(state='normal')
+        self.txt_matrix.delete("1.0", tk.END)
+        
+        # AQUÍ ES DONDE SE FORMATEA LA VISUALIZACIÓN
+        self.txt_matrix.insert(tk.END, "Matriz A:\n")
+        for row in A:
+            self.txt_matrix.insert(tk.END, "  " + "  ".join(f"{val:8.3f}" for val in row) + "\n")
+        
+        self.txt_matrix.insert(tk.END, "\nVector b:\n")
+        for val in b:
+            self.txt_matrix.insert(tk.END, f"  {val:8.3f}\n")
+
+        # Mostrar como matriz aumentada [A|b]
+        self.txt_matrix.insert(tk.END, "\nMatriz Aumentada [A|b]:\n")
+        for i, row in enumerate(A):
+            row_str = "  " + "  ".join(f"{val:8.3f}" for val in row)
+            row_str += f"  |  {b[i]:8.3f}\n"
+            self.txt_matrix.insert(tk.END, row_str)
+        
+        self.txt_matrix.config(state='disabled')
+        
+        messagebox.showinfo("Éxito", f"Matriz cargada correctamente ({len(A)}x{len(A)})")
+
     def _toggle_iter_inputs(self, event=None):
         metodo = self.combo_metodo.get()
         state = 'disabled' if metodo in ["Eliminación Gaussiana", "Cholesky"] else 'normal'
@@ -99,7 +146,12 @@ class SistemasEcuacionesView(BaseView):
 
     def _calculate(self):
         try:
-            A, b = self.matrix_widget.get_matrix_system()
+            # Verificar que hay una matriz cargada
+            if self.current_matrix is None:
+                messagebox.showwarning("Advertencia", "Primero debe cargar una matriz.")
+                return
+            
+            A, b = self.current_matrix
             metodo = self.combo_metodo.get()
             tol = float(self.entry_tol.get())
             max_iter = int(self.entry_iter.get())
@@ -111,9 +163,9 @@ class SistemasEcuacionesView(BaseView):
             elif metodo == "Gauss-Seidel":
                 res, extras, warning_msg = MetodoGaussSeidel(A, b, tol, max_iter)
             elif metodo == "Eliminación Gaussiana":
-                res, extras, warning_msg = EliminacionGaussiana(A, b)
+                res, extras = EliminacionGaussiana(A, b)
             elif metodo == "Cholesky":
-                res, extras, warning_msg = MetodoCholesky(A, b)
+                res, extras = MetodoCholesky(A, b)
 
             # Si hay advertencia (divergencia o condiciones), mostrarla pero SEGUIR
             if warning_msg:

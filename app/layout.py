@@ -36,61 +36,82 @@ class MainLayout:
         self.sidebar.pack(side=tk.LEFT, fill=tk.Y)
         self.sidebar.pack_propagate(False)
 
-        # Panel dividido verticalmente (Funciones / Métodos)
-        self.paned = ttk.PanedWindow(self.sidebar, orient=tk.VERTICAL)
-        self.paned.pack(fill=tk.BOTH, expand=True)
-
-        # ----- SECCIÓN FUNCIONES -----
-        self.func_section = self._create_scrollable_section("Funciones")
-
-        # Gestor de funciones (Panel Superior Izquierdo)
-        from app.function_manager import FunctionManager
-        self.function_manager = FunctionManager(self.func_section.content)
-
-        # ----- SECCIÓN MÉTODOS -----
-        self.method_section = self._create_scrollable_section("Métodos Numéricos")
-        self._create_method_buttons(self.method_section.content)
-
-        # Distribución de paneles
-        self.paned.add(self.func_section, weight=1)
-        self.paned.add(self.method_section, weight=1)
-
-    # ==================================================
-    # ========== SECCIÓN CON SCROLL REUTILIZABLE =========
-    # ==================================================
-    def _create_scrollable_section(self, title):
-        container = ttk.Frame(self.paned)
+        # ----- SECCIÓN FUNCIONES (Altura fija: 250px) -----
+        self.func_section = ttk.Frame(self.sidebar, height=250)
+        self.func_section.pack(fill=tk.X, side=tk.TOP)
+        self.func_section.pack_propagate(False)
 
         ttk.Label(
-            container,
-            text=title,
+            self.func_section,
+            text="Funciones",
             font=("Segoe UI", 11, "bold")
         ).pack(anchor="w", padx=10, pady=(8, 4))
 
-        body = ttk.Frame(container)
-        body.pack(fill=tk.BOTH, expand=True)
+        # Gestor de funciones
+        from app.function_manager import FunctionManager
+        func_content = ttk.Frame(self.func_section)
+        func_content.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+        self.function_manager = FunctionManager(func_content)
 
-        canvas = tk.Canvas(body, highlightthickness=0)
-        scrollbar = ttk.Scrollbar(body, orient=tk.VERTICAL, command=canvas.yview)
+        # ----- SECCIÓN MATRICES (Altura fija: 250px) -----
+        self.matrix_section = ttk.Frame(self.sidebar, height=250)
+        self.matrix_section.pack(fill=tk.X, side=tk.TOP)
+        self.matrix_section.pack_propagate(False)
+
+        ttk.Label(
+            self.matrix_section,
+            text="Matrices",
+            font=("Segoe UI", 11, "bold")
+        ).pack(anchor="w", padx=10, pady=(8, 4))
+
+        # Gestor de matrices
+        from app.matrix_manager import MatrixManager
+        matrix_content = ttk.Frame(self.matrix_section)
+        matrix_content.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+        self.matrix_manager = MatrixManager(matrix_content)
+
+        # ----- SECCIÓN MÉTODOS NUMÉRICOS (Resto del espacio con scroll) -----
+        self.method_section = ttk.Frame(self.sidebar)
+        self.method_section.pack(fill=tk.BOTH, expand=True, side=tk.TOP)
+
+        ttk.Label(
+            self.method_section,
+            text="Métodos Numéricos",
+            font=("Segoe UI", 11, "bold")
+        ).pack(anchor="w", padx=10, pady=(8, 4))
+
+        # Canvas con scrollbar para los botones
+        canvas_frame = ttk.Frame(self.method_section)
+        canvas_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=(0, 5))
+
+        canvas = tk.Canvas(canvas_frame, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=canvas.yview)
 
         canvas.configure(yscrollcommand=scrollbar.set)
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        content = ttk.Frame(canvas)
-        window_id = canvas.create_window((0, 0), window=content, anchor="nw")
+        methods_content = ttk.Frame(canvas)
+        window_id = canvas.create_window((0, 0), window=methods_content, anchor="nw")
 
         def _resize_content(event):
             canvas.itemconfig(window_id, width=event.width)
 
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
         canvas.bind("<Configure>", _resize_content)
-        content.bind(
+        methods_content.bind(
             "<Configure>",
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
+        
+        # Habilitar scroll con rueda del mouse
+        canvas.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
+        canvas.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
 
-        container.content = content
-        return container
+        # Crear los botones de métodos
+        self._create_method_buttons(methods_content)
 
     # ==================================================
     # ========== BOTONES DE MÉTODOS NUMÉRICOS ===========

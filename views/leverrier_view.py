@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from views.base_view import BaseView
-from views.matrix_widget import MatrixWidget
 
 # Importamos el método de Leverrier
 from metodos.metodosMatrices.Leverrier_Faddeev import (
@@ -9,15 +8,16 @@ from metodos.metodosMatrices.Leverrier_Faddeev import (
     multiplicacion_matriz_vector
 )
 
-# Importamos la función de comprobación (ajusta el nombre del archivo si lo guardaste diferente)
+# Importamos la función de comprobación
 from metodos.metodosMatrices.logica_matrices import comprobar_solucion
 
 class LeverrierFaddeevView(BaseView):
     def __init__(self, parent, layout=None):
         super().__init__(parent, layout)
+        self.current_matrix = None  # Almacena (A, b)
 
     def build(self):
-        # Layout: Izquierda (Matriz) | Derecha (Resultados detallados)
+        # Layout: Izquierda (Carga de Matriz) | Derecha (Resultados detallados)
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(0, weight=1)
@@ -28,14 +28,28 @@ class LeverrierFaddeevView(BaseView):
         left_panel = ttk.Frame(self)
         left_panel.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
-        lbl_input = ttk.LabelFrame(left_panel, text="Entrada de Datos")
-        lbl_input.pack(fill=tk.BOTH, expand=True)
+        lbl_input = ttk.LabelFrame(left_panel, text="Matriz para Análisis")
+        lbl_input.pack(fill=tk.BOTH, expand=True, pady=5)
 
-        self.matrix_widget = MatrixWidget(lbl_input)
-        self.matrix_widget.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        # Botón para cargar matriz seleccionada
+        ttk.Button(
+            lbl_input,
+            text="Cargar Matriz Seleccionada",
+            command=self._load_selected_matrix
+        ).pack(fill=tk.X, padx=10, pady=10)
 
-        ttk.Button(left_panel, text="Calcular Método Leverrier-Faddeev", 
-                   command=self._calculate).pack(fill=tk.X, pady=10)
+        # Área de visualización de la matriz cargada
+        ttk.Label(lbl_input, text="Matriz Cargada:").pack(anchor="w", padx=10, pady=(10, 2))
+        
+        self.txt_matrix = tk.Text(lbl_input, height=10, font=("Consolas", 9), state='disabled')
+        self.txt_matrix.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 10))
+
+        # Botón calcular
+        ttk.Button(
+            left_panel,
+            text="Calcular Método Leverrier-Faddeev",
+            command=self._calculate
+        ).pack(fill=tk.X, pady=10)
 
         # ==========================================
         # PANEL DERECHO: Resultados
@@ -87,22 +101,62 @@ class LeverrierFaddeevView(BaseView):
         
         self.tree_comp.pack(fill=tk.BOTH, expand=True)
 
+    def _load_selected_matrix(self):
+        """Carga la matriz seleccionada del sidebar"""
+        if not self.layout or not hasattr(self.layout, 'matrix_manager'):
+            messagebox.showerror("Error", "No hay gestor de matrices disponible")
+            return
+        
+        matrix_data = self.layout.matrix_manager.get_selected_matrix()
+        if not matrix_data:
+            messagebox.showwarning("Advertencia", "Seleccione una matriz del historial")
+            return
+        
+        self.current_matrix = matrix_data
+        A, b = matrix_data
+        
+        # Mostrar la matriz aumentada [A|b]
+        self.txt_matrix.config(state='normal')
+        self.txt_matrix.delete(1.0, tk.END)
+
+        # AQUÍ ES DONDE SE FORMATEA LA VISUALIZACIÓN
+        self.txt_matrix.insert(tk.END, "Matriz A:\n")
+        for row in A:
+            self.txt_matrix.insert(tk.END, "  " + "  ".join(f"{val:8.3f}" for val in row) + "\n")
+        
+        self.txt_matrix.insert(tk.END, "\nVector b:\n")
+        for val in b:
+            self.txt_matrix.insert(tk.END, f"  {val:8.3f}\n")
+        
+        self.txt_matrix.insert(tk.END, "\nMatriz Aumentada [A|b]:\n")
+        for i, row in enumerate(A):
+            row_str = "  " + "  ".join(f"{val:8.3f}" for val in row)
+            row_str += f"  |  {b[i]:8.3f}\n"
+            self.txt_matrix.insert(tk.END, row_str)
+        
+        self.txt_matrix.config(state='disabled')
+
     def _calculate(self):
+        """Ejecuta el cálculo del método Leverrier-Faddeev"""
         try:
-            # 1. Obtener datos del widget
-            A, b = self.matrix_widget.get_matrix_system()
+            # Verificar que hay una matriz cargada
+            if self.current_matrix is None:
+                messagebox.showwarning("Advertencia", "Primero debe cargar una matriz.")
+                return
+            
+            A, b = self.current_matrix
             n = len(A)
 
-            # 2. Llamar a TU método (favveed_Leberrier)
+            # Llamar al método de Leverrier-Faddeev
             c, det, inversa = favveed_Leberrier(A)
 
-            # 3. Calcular vector x = Inversa * b
+            # Calcular vector x = Inversa * b
             x = multiplicacion_matriz_vector(inversa, b)
 
-            # 4. Calcular comprobación Ax
+            # Calcular comprobación Ax
             Ax = comprobar_solucion(A, x)
 
-            # 5. Mostrar Resultados
+            # Mostrar Resultados
             self._display_results(n, c, det, inversa, x, Ax, b)
 
         except ZeroDivisionError:
@@ -154,7 +208,7 @@ class LeverrierFaddeevView(BaseView):
             self.txt_result.insert(tk.END, row_str)
         self.txt_result.insert(tk.END, "\n")
 
-        # Solución X (Solo texto simple, el detalle va en la tabla)
+        # Solución X
         self.txt_result.insert(tk.END, "4. Vector Solución (x):\n", "title")
         self.txt_result.insert(tk.END, "Nota: Calculado mediante x = A⁻¹ · b\n", "important")
         vec_x_str = "[" + ", ".join([f"{val:.6f}" for val in x]) + "]"
