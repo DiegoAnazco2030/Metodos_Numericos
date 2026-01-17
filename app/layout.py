@@ -14,6 +14,8 @@ from views.sistemas_ecuaciones_view import SistemasEcuacionesView
 from views.leverrier_view import LeverrierFaddeevView
 from views.derivadas_view import DerivadasView
 from views.integrales_view import IntegralesView
+from views.edos_view import EdosView
+from views.edps_view import EdpsView
 
 class MainLayout:
     def __init__(self, root):
@@ -192,6 +194,19 @@ class MainLayout:
             parent,
             text="Integrales Numéricas",
             command=lambda: self.show_view(IntegralesView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
+        # ---- Ecuaciones diferenciales ----
+        ttk.Button(
+            parent,
+            text="Ecuaciones diferenciales ordinarias",
+            command=lambda: self.show_view(EdosView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
+        ttk.Button(
+            parent,
+            text="Ecuaciones diferenciales parciales",
+            command=lambda: self.show_view(EdpsView)
         ).pack(fill=tk.X, padx=10, pady=6)
 
         # Nota: Aquí puedes agregar más botones siguiendo el mismo formato.
