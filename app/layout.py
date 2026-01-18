@@ -12,6 +12,8 @@ from views.falsa_posicion_view import FalsaPosicionView
 from views.muller_view import MullerView
 from views.sistemas_ecuaciones_view import SistemasEcuacionesView
 from views.leverrier_view import LeverrierFaddeevView
+from views.derivadas_view import DerivadasView
+from views.integrales_view import IntegralesView
 
 class MainLayout:
     def __init__(self, root):
@@ -176,6 +178,20 @@ class MainLayout:
             parent,
             text="Mínimos Cuadrados",
             command=lambda: self.show_view(MinimosCuadradosView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
+        # ---- Derivadas Numéricas ----
+        ttk.Button(
+            parent,
+            text="Derivadas Numéricas",
+            command=lambda: self.show_view(DerivadasView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
+        # ---- Integrales Numéricas ----
+        ttk.Button(
+            parent,
+            text="Integrales Numéricas",
+            command=lambda: self.show_view(IntegralesView)
         ).pack(fill=tk.X, padx=10, pady=6)
 
         # Nota: Aquí puedes agregar más botones siguiendo el mismo formato.

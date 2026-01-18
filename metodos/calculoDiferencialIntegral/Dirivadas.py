@@ -8,6 +8,9 @@ def validar_datos(f, x, h):
     if not isinstance(x, (int, float)) or not isinstance(h, (int, float)):
         raise TypeError("Los parámetros 'x' y 'h' deben ser números (int o float).")
     
+    if h < 0:
+        raise ValueError("El tamaño del paso 'h' no puede ser negativo.")
+
     if h == 0:
         raise ValueError("El tamaño del paso 'h' no puede ser 0, ya que provocaría una división por cero.")
 
