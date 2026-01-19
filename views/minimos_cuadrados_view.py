@@ -12,6 +12,17 @@ class MinimosCuadradosView(BaseView):
     def __init__(self, parent, layout=None):  # Añadir constructor
         super().__init__(parent, layout)
 
+    def destroy(self):
+        """Limpiar recursos de matplotlib antes de destruir la vista."""
+        try:
+            if hasattr(self, 'canvas') and self.canvas:
+                self.canvas.get_tk_widget().destroy()
+            if hasattr(self, 'fig') and self.fig:
+                plt.close(self.fig)
+        except:
+            pass
+        super().destroy()
+
     def build(self):
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
@@ -53,6 +64,7 @@ class MinimosCuadradosView(BaseView):
     def _build_results(self):
         frame = ttk.LabelFrame(self, text="Resultados")
         frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        self.results_frame = frame  # Guardar referencia para recrear canvas
 
         self.text = tk.Text(frame, height=18)
         self.text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -123,10 +135,17 @@ class MinimosCuadradosView(BaseView):
         self.text.delete("1.0", tk.END)
         self.text.insert(tk.END, reporte)
 
+        # Limpiar canvas anterior
+        if hasattr(self, 'canvas') and self.canvas:
+            self.canvas.get_tk_widget().pack_forget()
+        
         self.ax.clear()
         self.ax.scatter(x, y, label="Datos")
         self.ax.plot(x, y_pred, color="red", label=f"y = {m:.4f}x + {b:.4f}")
         self.ax.legend()
         self.ax.grid(True)
 
+        # Recrear canvas
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.results_frame)
+        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         self.canvas.draw()

@@ -13,6 +13,17 @@ class EdpsView(BaseView):
         super().__init__(parent, layout)
         self.cbar = None  # Referencia para la barra de colores
 
+    def destroy(self):
+        """Limpiar recursos de matplotlib antes de destruir la vista."""
+        try:
+            if hasattr(self, 'canvas') and self.canvas:
+                self.canvas.get_tk_widget().destroy()
+            if hasattr(self, 'fig') and self.fig:
+                plt.close(self.fig)
+        except:
+            pass
+        super().destroy()
+
     def build(self):
         # Configuración de pesos: Columna 0 fija, Columna 1 expandible
         self.columnconfigure(0, weight=0)
@@ -55,6 +66,7 @@ class EdpsView(BaseView):
         # --- PANEL DERECHO: GRAFICO ---
         right_panel = ttk.Frame(self)
         right_panel.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        self.right_panel = right_panel  # Guardar referencia para recrear canvas
 
         # Figura de Matplotlib mejorada
         self.fig, self.ax = plt.subplots(figsize=(6, 5), dpi=100)
@@ -105,6 +117,11 @@ class EdpsView(BaseView):
     def _calculate(self):
         try:
             metodo = self.combo_metodo.get()
+            
+            # Limpiar canvas anterior
+            if hasattr(self, 'canvas') and self.canvas:
+                self.canvas.get_tk_widget().pack_forget()
+            
             self.ax.clear()
 
             # Limpiar colorbar anterior si existe
@@ -153,6 +170,10 @@ class EdpsView(BaseView):
                 msg_aux = msg if msg else "Oscilación calculada."
 
             self.lbl_info.config(text=msg_aux)
+            
+            # Recrear canvas
+            self.canvas = FigureCanvasTkAgg(self.fig, master=self.right_panel)
+            self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
             self.canvas.draw()
 
         except Exception as e:

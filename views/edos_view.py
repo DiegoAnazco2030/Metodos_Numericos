@@ -12,6 +12,17 @@ class EdosView(BaseView):
     def __init__(self, parent, layout=None):
         super().__init__(parent, layout)
 
+    def destroy(self):
+        """Limpiar recursos de matplotlib antes de destruir la vista."""
+        try:
+            if hasattr(self, 'canvas') and self.canvas:
+                self.canvas.get_tk_widget().destroy()
+            if hasattr(self, 'fig') and self.fig:
+                plt.close(self.fig)
+        except:
+            pass
+        super().destroy()
+
     def build(self):
         # Configuración de pesos para que el gráfico (col 1) crezca más que los controles (col 0)
         self.columnconfigure(0, weight=1)
@@ -83,6 +94,7 @@ class EdosView(BaseView):
         # --- PANEL DERECHO: GRAFICO ---
         right_panel = ttk.Frame(self)
         right_panel.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        self.right_panel = right_panel  # Guardar referencia para recrear canvas
 
         # Ajustamos el tamaño de la figura para que sea legible
         self.fig, self.ax = plt.subplots(figsize=(6, 5), dpi=100)
@@ -174,6 +186,10 @@ class EdosView(BaseView):
                     pass
 
             # Actualizar Gráfico
+            # Limpiar canvas anterior
+            if hasattr(self, 'canvas') and self.canvas:
+                self.canvas.get_tk_widget().pack_forget()
+            
             self.ax.clear()
             self.ax.plot(puntos_x, puntos_y, 'b-o', markersize=4, linewidth=1, label='Solución Numérica')
             self.ax.set_title(f"Solución EDO: {metodo}")
@@ -181,6 +197,10 @@ class EdosView(BaseView):
             self.ax.set_ylabel("y")
             self.ax.grid(True, linestyle='--', alpha=0.7)
             self.ax.legend()
+            
+            # Recrear canvas
+            self.canvas = FigureCanvasTkAgg(self.fig, master=self.right_panel)
+            self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
             self.canvas.draw()
 
             messagebox.showinfo("Resultado", f"Cálculo completado.\nValor final aproximado: {y_res:.6f}")

@@ -16,6 +16,7 @@ from views.derivadas_view import DerivadasView
 from views.integrales_view import IntegralesView
 from views.edos_view import EdosView
 from views.edps_view import EdpsView
+from views.laplace_view import LaplaceView
 
 class MainLayout:
     def __init__(self, root):
@@ -209,6 +210,12 @@ class MainLayout:
             command=lambda: self.show_view(EdpsView)
         ).pack(fill=tk.X, padx=10, pady=6)
 
+        ttk.Button(
+            parent,
+            text="Laplace (SOR)",
+            command=lambda: self.show_view(LaplaceView)
+        ).pack(fill=tk.X, padx=10, pady=6)
+
         # Nota: Aquí puedes agregar más botones siguiendo el mismo formato.
 
     # ==================================================
@@ -226,8 +233,12 @@ class MainLayout:
         Destruye la vista actual y monta la nueva.
         Pasa 'self' a la vista para permitir comunicación con el FunctionManager.
         """
+        # Llamar destroy() explícitamente en widgets que tienen cleanup
         for widget in self.content.winfo_children():
-            widget.destroy()
+            if hasattr(widget, 'destroy'):
+                widget.destroy()
+            else:
+                widget.destroy()
 
         # Importante: Pasamos 'self' como segundo argumento
         view = view_class(self.content, self)
