@@ -30,12 +30,11 @@ class EdpsView(BaseView):
         self.columnconfigure(1, weight=1)
         self.rowconfigure(0, weight=1)
 
-        # --- PANEL IZQUIERDO: CONFIGURACION (Ancho fijo) ---
+        # --- PANEL IZQUIERDO: CONFIGURACION ---
         left_panel = ttk.Frame(self, width=320)
         left_panel.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         left_panel.pack_propagate(False)
 
-        # Título y Selector
         ttk.Label(left_panel, text="Tipo de Ecuación (EDP):", font=("Segoe UI", 10, "bold")).pack(pady=(0, 5),
                                                                                                   anchor="w")
         self.combo_metodo = ttk.Combobox(left_panel, state="readonly", values=[
@@ -47,17 +46,14 @@ class EdpsView(BaseView):
         self.combo_metodo.pack(fill=tk.X, pady=5)
         self.combo_metodo.bind("<<ComboboxSelected>>", self._update_inputs)
 
-        # Frame de inputs dinámicos con scroll
         self.input_container = ttk.LabelFrame(left_panel, text="Parámetros del Sistema")
         self.input_container.pack(fill=tk.BOTH, expand=True, pady=10)
 
         self.entries = {}
         self._update_inputs(None)
 
-        # Botón Calcular
         ttk.Button(left_panel, text="Resolver y Graficar", command=self._calculate).pack(pady=5, fill=tk.X)
 
-        # Panel de Resultados Auxiliares
         res_frame = ttk.LabelFrame(left_panel, text="Información")
         res_frame.pack(fill=tk.X, pady=5)
         self.lbl_info = ttk.Label(res_frame, text="Esperando ejecución...", wraplength=280, justify="left")
@@ -66,11 +62,15 @@ class EdpsView(BaseView):
         # --- PANEL DERECHO: GRAFICO ---
         right_panel = ttk.Frame(self)
         right_panel.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
-        self.right_panel = right_panel  # Guardar referencia para recrear canvas
+        self.right_panel = right_panel
 
-        # Figura de Matplotlib mejorada
-        self.fig, self.ax = plt.subplots(figsize=(6, 5), dpi=100)
-        self.fig.tight_layout(pad=4.0)
+        # Creamos la figura y los ejes con posiciones fijas para que la malla no se mueva
+        self.fig = plt.Figure(figsize=(6, 5), dpi=100)
+
+        # add_axes([izquierda, abajo, ancho, alto]) en escala 0 a 1
+        self.ax = self.fig.add_axes([0.1, 0.12, 0.70, 0.78])
+        self.cax = self.fig.add_axes([0.83, 0.12, 0.03, 0.78])
+
         self.canvas = FigureCanvasTkAgg(self.fig, master=right_panel)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
@@ -117,17 +117,10 @@ class EdpsView(BaseView):
     def _calculate(self):
         try:
             metodo = self.combo_metodo.get()
-            
-            # Limpiar canvas anterior
-            if hasattr(self, 'canvas') and self.canvas:
-                self.canvas.get_tk_widget().pack_forget()
-            
-            self.ax.clear()
 
-            # Limpiar colorbar anterior si existe
-            if self.cbar:
-                self.cbar.remove()
-                self.cbar = None
+            # Limpiamos ambos ejes para el nuevo dibujo
+            self.ax.clear()
+            self.cax.clear()
 
             msg_aux = ""
 
@@ -139,7 +132,8 @@ class EdpsView(BaseView):
 
                 T, historial = edps.resolverLaplace(nx, ny, iters, 1e-4, te, td, ta, tb)
                 im = self.ax.imshow(T, cmap='magma', interpolation='bilinear', origin='upper')
-                self.cbar = self.fig.colorbar(im, ax=self.ax)
+
+                self.fig.colorbar(im, cax=self.cax)  # Usamos el eje reservado
                 self.ax.set_title("Laplace: Distribución Térmica")
                 msg_aux = f"Estado estable alcanzado.\nError: {historial[-1]:.2e}"
 
@@ -151,9 +145,11 @@ class EdpsView(BaseView):
 
                 u, x, msg = edps.resolverCalorExplicito(func, L, t_total, nx, nt, alpha)
                 im = self.ax.imshow(u, extent=[0, L, t_total, 0], aspect='auto', cmap='hot')
-                self.cbar = self.fig.colorbar(im, ax=self.ax)
+
+                self.fig.colorbar(im, cax=self.cax)
                 self.ax.set_title("Calor: Difusión en el Tiempo")
-                self.ax.set_xlabel("Posición (x)"), self.ax.set_ylabel("Tiempo (t)")
+                self.ax.set_xlabel("Posición (x)")
+                self.ax.set_ylabel("Tiempo (t)")
                 msg_aux = msg if msg else "Simulación completa."
 
             elif "Onda" in metodo:
@@ -164,16 +160,14 @@ class EdpsView(BaseView):
 
                 u, x, msg = edps.resolverOnda(func, L, t_total, nx, nt, c)
                 im = self.ax.imshow(u, extent=[0, L, t_total, 0], aspect='auto', cmap='RdBu_r')
-                self.cbar = self.fig.colorbar(im, ax=self.ax)
+
+                self.fig.colorbar(im, cax=self.cax)
                 self.ax.set_title("Onda: Propagación de Perturbación")
-                self.ax.set_xlabel("Posición (x)"), self.ax.set_ylabel("Tiempo (t)")
+                self.ax.set_xlabel("Posición (x)")
+                self.ax.set_ylabel("Tiempo (t)")
                 msg_aux = msg if msg else "Oscilación calculada."
 
             self.lbl_info.config(text=msg_aux)
-            
-            # Recrear canvas
-            self.canvas = FigureCanvasTkAgg(self.fig, master=self.right_panel)
-            self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
             self.canvas.draw()
 
         except Exception as e:
