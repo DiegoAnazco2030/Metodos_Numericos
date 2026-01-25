@@ -25,8 +25,8 @@ class EdosView(BaseView):
 
     def build(self):
         # Configuración de pesos para que el gráfico (col 1) crezca más que los controles (col 0)
-        self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=2)
+        self.columnconfigure(0, weight=1, uniform="cols", minsize=320)
+        self.columnconfigure(1, weight=3, uniform="cols")
         self.rowconfigure(0, weight=1)
 
         # --- PANEL IZQUIERDO: CONFIGURACION Y TABLA ---
@@ -83,13 +83,19 @@ class EdosView(BaseView):
         table_frame = ttk.LabelFrame(left_panel, text="Tabla de Iteraciones")
         table_frame.pack(fill=tk.BOTH, expand=True, pady=5)
 
+        # Estructura con grid para manejar ambos scrollbars sin que la tabla expanda el panel
+        table_frame.rowconfigure(0, weight=1)
+        table_frame.columnconfigure(0, weight=1)
+
         # Limitamos la altura del Treeview (height=12 filas visibles)
         self.tree = ttk.Treeview(table_frame, show="headings", height=12)
-        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.tree.grid(row=0, column=0, sticky="nsew")
 
-        scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.tree.configure(yscroll=scrollbar.set)
+        scrollbar_y = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
+        scrollbar_y.grid(row=0, column=1, sticky="ns")
+        scrollbar_x = ttk.Scrollbar(table_frame, orient="horizontal", command=self.tree.xview)
+        scrollbar_x.grid(row=1, column=0, sticky="ew")
+        self.tree.configure(yscroll=scrollbar_y.set, xscroll=scrollbar_x.set)
 
         # --- PANEL DERECHO: GRAFICO ---
         right_panel = ttk.Frame(self)
@@ -142,7 +148,7 @@ class EdosView(BaseView):
         self.tree["columns"] = cols
         for c, h in zip(cols, headers):
             self.tree.heading(c, text=h)
-            self.tree.column(c, width=70, anchor=tk.CENTER, stretch=True)
+            self.tree.column(c, width=90, anchor=tk.CENTER, stretch=False)
 
     def _calculate(self):
         try:
